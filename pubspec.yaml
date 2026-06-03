@@ -1,4 +1,4 @@
-name: flutter_test_22
+name: pocket_omr
 description: "A new Flutter project."
 publish_to: 'none'
 version: 1.0.0+1
@@ -11,6 +11,13 @@ dependencies:
     sdk: flutter
   image_picker: ^1.0.7
   cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  dio: ^5.7.0
+  shared_preferences: ^2.3.2
+  camera: ^0.11.0+2
+  permission_handler: ^11.3.1
+  path_provider: ^2.1.4
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:
@@ -21,7 +28,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/profile_back.png
-    - assets/images/edit_profile_back.png
-    - assets/images/quizor_logo.png  
-    - assets/images/quizor_logo.png
+    - assets/images/

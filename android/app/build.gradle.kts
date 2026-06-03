@@ -19,6 +19,16 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    signingConfigs {
+        // Some OEM ROMs (e.g. Tecno/Infinix HiOS) reject v2-only debug APKs with
+        // "SHA-256 digest of contents did not verify". Also sign with the v1 (JAR)
+        // scheme so those devices can install.
+        getByName("debug") {
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.fluttermap.flutter_test_22"

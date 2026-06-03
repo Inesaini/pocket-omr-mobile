@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>flutter_test_22</string>
+	<string>Pocket OMR</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -66,9 +66,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-        <string>Needed to update your profile picture.</string>
-    <key>NSCameraUsageDescription</key>
-    <string>Needed to take a profile picture.</string>
+	<string>Used to select your profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Used to save captured exam pages to your library.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Used to scan exam answer sheets for automatic grading.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Not used. Required by the camera module.</string>
 </dict>
 </plist>

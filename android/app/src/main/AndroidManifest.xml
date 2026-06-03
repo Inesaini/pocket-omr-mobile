@@ -1,8 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Network access. usesCleartextTraffic allows plain http:// to the dev
+         backend (Android 9+ blocks it by default). For production, serve the API
+         over https and remove usesCleartextTraffic (or scope it via a
+         networkSecurityConfig). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="flutter_test_22"
+        android:label="Pocket OMR"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -43,5 +49,7 @@
         </intent>
     </queries>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.CAMERA"/> 
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 </manifest>
