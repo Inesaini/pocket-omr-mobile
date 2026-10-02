@@ -74,6 +74,25 @@ class AuthService {
     }
   }
 
+  /// Updates the current user's profile (first/last name, email) on the backend
+  /// and returns the refreshed user. Only non-null fields are sent.
+  Future<UserModel> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? email,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (firstName != null) data['first_name'] = firstName;
+      if (lastName != null) data['last_name'] = lastName;
+      if (email != null) data['email'] = email;
+      final response = await _dioClient.dio.put(ApiConstants.profile, data: data);
+      return UserModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _extractError(e);
+    }
+  }
+
   Future<void> logout() async {
     final refreshToken = await _tokenManager.getRefreshToken();
     try {

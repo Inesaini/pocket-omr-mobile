@@ -11,7 +11,9 @@ import 'camera_screen.dart';
 import 'exam_results_stop_screen.dart';
 
 class ExamListScreen extends StatefulWidget {
-  const ExamListScreen({super.key});
+  /// Bumped by the shell when this tab is (re)selected, to re-fetch the list.
+  final Listenable? reloadSignal;
+  const ExamListScreen({super.key, this.reloadSignal});
 
   @override
   State<ExamListScreen> createState() => _ExamListScreenState();
@@ -21,6 +23,23 @@ class _ExamListScreenState extends State<ExamListScreen> {
   final _service = ExamService();
   String _query = '';
   late Future<List<Exam>> _future = _service.fetchExamsToCorrect();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.reloadSignal?.addListener(_reload);
+  }
+
+  @override
+  void dispose() {
+    widget.reloadSignal?.removeListener(_reload);
+    super.dispose();
+  }
+
+  void _reload() {
+    if (!mounted) return;
+    setState(() => _future = _service.fetchExamsToCorrect(query: _query));
+  }
 
   void _search(String q) {
     setState(() {

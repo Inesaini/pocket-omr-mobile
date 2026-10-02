@@ -40,4 +40,6 @@ class ApiConstants {
   static String examDetail(String id) => '/exams/$id';
   static String examMobile(String id) => '/exams/$id/mobile';
   static String examUploadImages(String id) => '/exams/$id/upload-images';
+  static String examSubmission(String examId, String submissionId) =>
+      '/exams/$examId/submissions/$submissionId';
 }

@@ -9,7 +9,9 @@ import '../widgets/search_field.dart';
 import 'exam_results_continue_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  /// Bumped by the shell when this tab is (re)selected, to re-fetch history.
+  final Listenable? reloadSignal;
+  const HistoryScreen({super.key, this.reloadSignal});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -17,10 +19,31 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final _service = ExamService();
+  String _query = '';
   late Future<List<HistoryExam>> _future = _service.fetchHistory();
 
+  @override
+  void initState() {
+    super.initState();
+    widget.reloadSignal?.addListener(_reload);
+  }
+
+  @override
+  void dispose() {
+    widget.reloadSignal?.removeListener(_reload);
+    super.dispose();
+  }
+
+  void _reload() {
+    if (!mounted) return;
+    setState(() => _future = _service.fetchHistory(query: _query));
+  }
+
   void _search(String q) {
-    setState(() => _future = _service.fetchHistory(query: q));
+    setState(() {
+      _query = q;
+      _future = _service.fetchHistory(query: q);
+    });
   }
 
   void _openDetails(HistoryExam h) async {

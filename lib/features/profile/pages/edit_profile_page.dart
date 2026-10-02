@@ -23,6 +23,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late final TextEditingController _emailCtrl;
 
   File? _localImage;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -92,12 +93,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  void _saveChanges() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile editing is not yet supported by the backend.'),
-      ),
-    );
+  Future<void> _saveChanges() async {
+    if (_saving) return;
+    final firstName = _firstNameCtrl.text.trim();
+    final lastName = _lastNameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+
+    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty) {
+      _toast('First name, last name and email are required.');
+      return;
+    }
+    final emailOk = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+    if (!emailOk) {
+      _toast('Please enter a valid email address.');
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await context.read<AuthProvider>().updateProfile(
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+          );
+      if (!mounted) return;
+      _toast('Profile updated.');
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      _toast(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -141,7 +172,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   const SizedBox(height: 8),
                   PrimaryButton(
-                    label: 'Save changes',
+                    label: _saving ? 'Saving...' : 'Save changes',
                     onPressed: _saveChanges,
                   ),
                 ],

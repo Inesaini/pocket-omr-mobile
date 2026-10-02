@@ -17,14 +17,34 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   late int _index = widget.initialIndex;
 
-  final _pages = const <Widget>[
-    ProfilePage(),
-    HomeScreen(),
-    ExamListScreen(),
-    HistoryScreen(),
+  // Tabs live in an IndexedStack (kept alive), so a screen's initState runs only
+  // once. These tick notifiers tell a screen to re-fetch its data each time its
+  // tab is (re)selected — e.g. so newly graded papers show up in recent/history.
+  final _homeReload = ValueNotifier<int>(0);
+  final _listReload = ValueNotifier<int>(0);
+  final _historyReload = ValueNotifier<int>(0);
+
+  late final List<Widget> _pages = <Widget>[
+    const ProfilePage(),
+    HomeScreen(reloadSignal: _homeReload),
+    ExamListScreen(reloadSignal: _listReload),
+    HistoryScreen(reloadSignal: _historyReload),
   ];
 
-  void _onTap(int i) => setState(() => _index = i);
+  void _onTap(int i) {
+    setState(() => _index = i);
+    if (i == 1) _homeReload.value++;
+    if (i == 2) _listReload.value++;
+    if (i == 3) _historyReload.value++;
+  }
+
+  @override
+  void dispose() {
+    _homeReload.dispose();
+    _listReload.dispose();
+    _historyReload.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

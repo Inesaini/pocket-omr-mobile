@@ -29,8 +29,6 @@ class _CameraScreenState extends State<CameraScreen>
   final _service = ExamService();
   bool _busy = false;
 
-  final int _target = 40;
-
   @override
   void initState() {
     super.initState();
@@ -251,7 +249,6 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Widget _buildTopBar() {
-    final count = _captured.length;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(gradient: PocketColors.background),
@@ -261,34 +258,7 @@ class _CameraScreenState extends State<CameraScreen>
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back, color: PocketColors.navy),
           ),
-          Expanded(
-            child: Column(
-              children: [
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      color: PocketColors.navy,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                    ),
-                    children: [
-                      TextSpan(text: '$count '),
-                      const TextSpan(
-                        text: '/',
-                        style: TextStyle(color: PocketColors.lightBlue),
-                      ),
-                      TextSpan(text: ' $_target'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                _SegmentedProgress(
-                  segments: 10,
-                  filled: (10 * count / _target).round(),
-                ),
-              ],
-            ),
-          ),
+          const Expanded(child: SizedBox()),
           TextButton(
             onPressed: _busy ? null : _finishAndUpload,
             style: TextButton.styleFrom(
@@ -566,32 +536,6 @@ class _PhotoPreviewScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SegmentedProgress extends StatelessWidget {
-  final int segments;
-  final int filled;
-  const _SegmentedProgress({required this.segments, required this.filled});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(segments, (i) {
-        return Container(
-          width: 16,
-          height: 14,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(2),
-            color: i < filled
-                ? PocketColors.navy
-                : PocketColors.navy.withOpacity(0.2),
-          ),
-        );
-      }),
     );
   }
 }

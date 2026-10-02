@@ -12,7 +12,10 @@ import '../widgets/screen_title.dart';
 import 'exam_results_continue_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  /// Bumped by the shell when the Home tab is (re)selected, so recent activities
+  /// re-fetch and reflect papers graded since the screen first loaded.
+  final Listenable? reloadSignal;
+  const HomeScreen({super.key, this.reloadSignal});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -26,6 +29,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _future = _service.fetchRecentActivities();
+    widget.reloadSignal?.addListener(_reload);
+  }
+
+  @override
+  void dispose() {
+    widget.reloadSignal?.removeListener(_reload);
+    super.dispose();
+  }
+
+  void _reload() {
+    if (!mounted) return;
+    setState(() => _future = _service.fetchRecentActivities());
   }
 
   @override
@@ -62,11 +77,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final exams = snap.data!;
-                  return ListView.separated(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    itemCount: exams.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => _RecentExamCard(exam: exams[i]),
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      _future = _service.fetchRecentActivities();
+                      setState(() {});
+                      await _future;
+                    },
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 16),
+                      itemCount: exams.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (_, i) => _RecentExamCard(exam: exams[i]),
+                    ),
                   );
                 },
               ),

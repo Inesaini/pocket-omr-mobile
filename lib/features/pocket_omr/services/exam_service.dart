@@ -69,4 +69,12 @@ class ExamService {
     );
     return Exam.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Deletes a single graded paper (submission) and returns the updated exam.
+  Future<Exam> deleteSubmission(String examId, String submissionId) async {
+    final response = await _dioClient.dio.delete(
+      ApiConstants.examSubmission(examId, submissionId),
+    );
+    return Exam.fromJson(response.data as Map<String, dynamic>);
+  }
 }

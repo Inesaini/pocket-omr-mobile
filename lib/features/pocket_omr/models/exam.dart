@@ -1,4 +1,6 @@
 class StudentResult {
+  /// Submission id — used to delete this individual graded paper.
+  final String id;
   final String firstName;
   final String lastName;
   final String studentId;
@@ -13,6 +15,7 @@ class StudentResult {
   final List<int> flaggedQuestions;
 
   const StudentResult({
+    this.id = '',
     required this.firstName,
     required this.lastName,
     required this.studentId,
@@ -31,6 +34,7 @@ class StudentResult {
 
   factory StudentResult.fromJson(Map<String, dynamic> json) {
     return StudentResult(
+      id: json['id']?.toString() ?? '',
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       studentId: json['studentId'] ?? '',

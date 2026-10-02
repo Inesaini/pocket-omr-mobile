@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/exam.dart';
+import '../services/exam_service.dart';
 import '../theme/pocket_colors.dart';
 import 'confidence_bar.dart';
 
-class ExamResultsBody extends StatelessWidget {
+class ExamResultsBody extends StatefulWidget {
   final Exam exam;
   final Widget bottomAction;
 
@@ -13,6 +14,55 @@ class ExamResultsBody extends StatelessWidget {
     required this.exam,
     required this.bottomAction,
   });
+
+  @override
+  State<ExamResultsBody> createState() => _ExamResultsBodyState();
+}
+
+class _ExamResultsBodyState extends State<ExamResultsBody> {
+  final _service = ExamService();
+  late Exam _exam = widget.exam;
+
+  Future<bool> _confirmDelete(StudentResult student) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete this paper?'),
+        content: Text(
+          'The graded paper for "${student.fullName}" will be permanently '
+          'removed and the exam totals updated.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
+  Future<void> _deletePaper(StudentResult student) async {
+    try {
+      final updated = await _service.deleteSubmission(_exam.id, student.id);
+      if (!mounted) return;
+      setState(() => _exam = updated);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paper deleted')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete the paper')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,21 +86,43 @@ class ExamResultsBody extends StatelessWidget {
           ),
           const _Title('Exam results overview'),
           const SizedBox(height: 14),
-          _InfoCard(exam: exam),
+          _InfoCard(exam: _exam),
           const SizedBox(height: 22),
           const _ColumnHeaders(),
           const SizedBox(height: 10),
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 16),
-              itemCount: exam.students.length,
+              itemCount: _exam.students.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => _StudentRow(student: exam.students[i]),
+              itemBuilder: (_, i) {
+                final student = _exam.students[i];
+                // Papers carry a submission id; if missing, no swipe-to-delete.
+                if (student.id.isEmpty) {
+                  return _StudentRow(student: student);
+                }
+                return Dismissible(
+                  key: ValueKey(student.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 22),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  confirmDismiss: (_) => _confirmDelete(student),
+                  onDismissed: (_) => _deletePaper(student),
+                  child: _StudentRow(student: student),
+                );
+              },
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Center(child: bottomAction),
+            child: Center(child: widget.bottomAction),
           ),
         ],
       ),

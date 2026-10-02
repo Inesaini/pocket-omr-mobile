@@ -81,6 +81,22 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Persists profile changes to the backend and refreshes the in-memory user.
+  /// Throws on failure (the caller shows the error); does not change auth status
+  /// so it won't trigger app-level re-routing.
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? email,
+  }) async {
+    _user = await _authService.updateProfile(
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+    );
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     _setStatus(AuthStatus.loading);
     await _authService.logout();
