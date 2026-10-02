@@ -192,4 +192,5 @@ connects it to the backend.
 
 Beyond this repository, I built the whole
 [backend](https://github.com/Inesaini/pocket-omr-backend), including the student list
-feature, and improved the web frontend.
+feature, improved the web frontend, and contributed to the handwritten name recognition
+model and the sheet segmentation pipeline.
