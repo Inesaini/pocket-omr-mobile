@@ -186,6 +186,10 @@ system has three parts:
 
 ### My contribution
 
-<!-- TODO(Ines): replace with your own words before publishing -->
-I built this mobile app's home, exam list, camera, results, history and profile screens,
-and connected them to the backend API.
+I built this entire mobile app: authentication, the home, exam list, camera, results,
+history and profile screens, the upload and retry flow, and the networking layer that
+connects it to the backend.
+
+Beyond this repository, I built the whole
+[backend](https://github.com/Inesaini/pocket-omr-backend), including the student list
+feature, and improved the web frontend.
