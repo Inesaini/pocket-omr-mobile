@@ -1,51 +1,85 @@
-# Pocket OMR — Mobile app
+# Pocket OMR: Mobile App
 
-Flutter app for **Pocket OMR**, an end-to-end Optical Mark Recognition system that grades
-multiple-choice exam sheets photographed with an ordinary smartphone.
+**The teacher's tool in the classroom: pick an exam, photograph the students' answer sheets, and see every grade a few seconds later.**
 
-The mobile app is the teacher's tool in the classroom: pick an exam, photograph the filled
-answer sheets, and see each student's grade a few seconds later. Recognition runs on the
-backend, which reads both the answer bubbles and the handwritten student name on each sheet.
+A Flutter app for **Pocket OMR**, a system that grades multiple-choice exams from smartphone photos. The app captures the sheets; the [backend](https://github.com/Inesaini/pocket-omr-backend) reads the bubbles and each student's handwritten name.
 
-<!-- TODO(Ines): add 3–4 screenshots (home, camera, results, history) to docs/screenshots/
-     and uncomment:
-| Home | Scan | Results | History |
-|---|---|---|---|
-| ![Home](docs/screenshots/home.png) | ![Scan](docs/screenshots/camera.png) | ![Results](docs/screenshots/results.png) | ![History](docs/screenshots/history.png) |
--->
+## Highlights
+
+- **Complete scan-to-grade workflow:** in-app camera or photo/`.zip` import, upload with progress, per-student results, and one-tap retry for sheets that couldn't be read.
+- **Teacher stays in control:** questions the model was unsure about are flagged per student ("Review Q2, Q5").
+- **Clean architecture:** feature-first folders and a strict Screen → Provider → Service → HTTP client layering.
+- **Secure sessions:** JWT bearer tokens with automatic refresh and retry on `401`, and server-side revocation on logout.
+- **Cross-platform:** one Dart codebase for Android, iOS, web and desktop.
+
+**Stack:** Flutter · Dart · Provider · Dio · camera / image_picker · shared_preferences
+
+## My contribution
+
+I built this entire mobile app: authentication, the home, exam list, camera, results,
+history and profile screens, the upload and retry flow, and the networking layer that
+connects it to the backend.
+
+Beyond this repository, I built the whole
+[backend](https://github.com/Inesaini/pocket-omr-backend), including the student list
+feature, improved the web frontend (API integration, student list, grid and correction
+sheets, Excel export of grades), and contributed to the handwritten name recognition model
+and the sheet segmentation pipeline.
 
 ## Features
 
 - **Scan answer sheets** with the in-app camera, or pick existing photos or a `.zip` of a
   whole class from the device.
-- **Automatic grading** — sheets are uploaded to the backend and come back with the
+- **Automatic grading:** sheets are uploaded to the backend and come back with the
   recognised student, score and confidence.
-- **Retry failed sheets** — if a photo can't be read, a dialog lists the failed sheets and
+- **Retry failed sheets:** if a photo can't be read, a dialog lists the failed sheets and
   re-uploads only those.
-- **Review flags** — questions the model was unsure about are highlighted per student
+- **Review flags:** questions the model was unsure about are highlighted per student
   ("Review Q2, Q5") so the teacher can check them by hand.
-- **Exam list and search** — exams still to correct, recent activity, and a searchable
+- **Exam list and search:** exams still to correct, recent activity, and a searchable
   history with average score and confidence per exam.
-- **Manage results** — open an exam's results, keep scanning, or delete a wrongly graded
+- **Manage results:** open an exam's results, keep scanning, or delete a wrongly graded
   paper.
-- **Accounts** — sign up, sign in, password reset by email code, profile view and edit,
+- **Accounts:** sign up, sign in, password reset by email code, profile view and edit,
   with automatic token refresh.
 
-## Stack
+## Architecture
 
-- Flutter `^3.11.1` (Dart) — Android, iOS, web, macOS, Linux, Windows
-- State: `provider` + `ChangeNotifier`
-- HTTP: `dio` with an auth-bearer interceptor and auto token refresh
-- Token storage: `shared_preferences`
-- Capture: `camera`, `image_picker`, `file_picker`, `permission_handler`
+```mermaid
+flowchart LR
+    subgraph APP["Flutter app"]
+        S["Screens<br/>exam list · camera<br/>results · history"] --> P["Providers<br/>ChangeNotifier state"]
+        P --> SV["Services<br/>ExamService, upload + retry"]
+        SV --> D["DioClient<br/>bearer token, auto refresh"]
+    end
+    D -- "REST /api/v1" --> API["Pocket OMR backend<br/>FastAPI"]
+    API --> CV["Grading pipeline<br/>YOLOv8 + CNNs"]
+```
 
-## Prerequisites
+Screens never call the network directly: providers hold the state, services do the work, and `DioClient` handles authentication for every request.
 
-- Flutter SDK `^3.11.1`
-- The Pocket OMR backend running on `http://localhost:8000`
-  ([pocket-omr/backend](https://github.com/pocket-omr/backend), branch `new-backend`)
+### Scan and grade flow
 
-## Run
+```mermaid
+sequenceDiagram
+    participant T as Teacher
+    participant App as Mobile app
+    participant API as Backend
+    T->>App: open an exam, photograph sheets
+    App->>API: POST /exams/{id}/upload-images
+    API->>API: segment, read name and bubbles, score
+    API-->>App: exam with every student's result
+    App-->>T: scores, confidence, questions to review
+    alt some sheets unreadable
+        App-->>T: list of failed sheets
+        T->>App: Retry
+        App->>API: re-upload only those sheets
+    end
+```
+
+## Run it
+
+Requires the Flutter SDK (`^3.11.1`) and the [backend](https://github.com/Inesaini/pocket-omr-backend) running on port 8000.
 
 ```bash
 flutter pub get
@@ -67,18 +101,8 @@ To run on a physical Android phone over Wi-Fi, pass your computer's LAN IP:
 The script builds the app with that backend address, re-signs the APK (some OEM ROMs reject
 the default debug signature), installs it and launches it.
 
-## Common commands
-
-```bash
-flutter analyze                              # lint
-dart format lib test                         # format
-flutter test                                 # all tests
-flutter test test/widget_test.dart           # single file
-flutter test --plain-name "test name"        # single test by name
-flutter build apk / ios / web                # release builds
-```
-
-## Architecture
+<details>
+<summary>Project layout</summary>
 
 Feature-first layout under `lib/`:
 
@@ -102,27 +126,10 @@ lib/
 └── shared/widgets/              # cross-feature widgets
 ```
 
-### Layering (strict)
+</details>
 
-```
-Screen → Provider (ChangeNotifier) → Service → DioClient → backend
-```
-
-Screens never call Dio directly. Providers expose state (typically via an
-`enum Status`), delegate network work to a service, and notify listeners.
-
-### Scan and grade flow
-
-1. The teacher opens an exam from the list of exams to correct.
-2. Sheets are captured with the camera screen, or selected as images or a `.zip`.
-3. `uploadSheetsWithProgress` sends them to `POST /exams/{id}/upload-images` behind a
-   blocking progress dialog.
-4. The backend returns the updated exam with every student's result; the results screen
-   shows score, confidence and any questions flagged for review.
-5. Sheets the backend couldn't segment are listed in a dialog with a **Retry** action that
-   re-uploads only those.
-
-### Auth flow
+<details>
+<summary>Authentication flow</summary>
 
 1. `main.dart` mounts `AuthProvider` in a `MultiProvider`.
 2. `_AuthGate` watches `AuthProvider.status`:
@@ -138,7 +145,10 @@ Screens never call Dio directly. Providers expose state (typically via an
    token body, which revokes both tokens server-side, then clears local
    storage.
 
-## Backend contract (summary)
+</details>
+
+<details>
+<summary>Backend contract</summary>
 
 Base URL: `http://<host>:8000/api/v1`
 
@@ -163,7 +173,19 @@ Field names are snake_case (`first_name`, `last_name`, `access_token`,
 Password policy (enforced on both client and server): ≥8 chars, at least
 one uppercase, one lowercase, one digit.
 
-## Gotchas
+</details>
+
+<details>
+<summary>Development commands and gotchas</summary>
+
+```bash
+flutter analyze                              # lint
+dart format lib test                         # format
+flutter test                                 # all tests
+flutter test test/widget_test.dart           # single file
+flutter test --plain-name "test name"        # single test by name
+flutter build apk / ios / web                # release builds
+```
 
 - **Android emulator** must reach the host via `10.0.2.2`, not
   `localhost`. This is handled automatically by `ApiConstants`.
@@ -173,25 +195,15 @@ one uppercase, one lowercase, one digit.
   it is enabled permissively in the backend's `app/main.py` for development.
 - `lib/app.dart` is unused dead code. The real entry point is `main.dart`.
 
+</details>
+
 ## About the project
 
 Pocket OMR was built as a pluridisciplinary project at the École Supérieure en Informatique
 de Sidi Bel Abbès (2025/2026) by a team of six, supervised by Pr. Oussama Serhane. The
 system has three parts:
 
-- **Backend** — FastAPI service with the grading pipeline (OpenCV segmentation, YOLOv8 and
+- **Backend:** FastAPI service with the grading pipeline (OpenCV segmentation, YOLOv8 and
   CNN models for bubbles, a CNN for handwritten names)
-- **Web app** — React + Vite, for teachers to create exams, print sheets and export grades
-- **Mobile app** (this repository) — on-site capture and result review
-
-### My contribution
-
-I built this entire mobile app: authentication, the home, exam list, camera, results,
-history and profile screens, the upload and retry flow, and the networking layer that
-connects it to the backend.
-
-Beyond this repository, I built the whole
-[backend](https://github.com/Inesaini/pocket-omr-backend), including the student list
-feature, improved the web frontend (API integration, student list, grid and correction
-sheets, Excel export of grades), and contributed to the handwritten name recognition model
-and the sheet segmentation pipeline.
+- **Web app:** React + Vite, for teachers to create exams, print sheets and export grades
+- **Mobile app** (this repository): on-site capture and result review
