@@ -43,6 +43,12 @@ and the sheet segmentation pipeline.
 - **Accounts:** sign up, sign in, password reset by email code, profile view and edit,
   with automatic token refresh.
 
+## Screenshots
+
+| Exams to correct | History |
+| :---: | :---: |
+| <img src="docs/screenshots/exam-list.jpg" width="280" alt="Exam list to correct"> | <img src="docs/screenshots/history.jpg" width="280" alt="Grading history"> |
+
 ## Architecture
 
 ```mermaid
